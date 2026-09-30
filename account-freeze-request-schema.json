@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Account Freeze Request Resolution",
+  "description": "Canonical output schema for T-4471-type ticket resolutions across fraud/compliance workflows",
+  "type": "object",
+  "required": [
+    "ticket_id",
+    "action",
+    "affected_accounts",
+    "reason_code",
+    "evidence_summary"
+  ],
+  "properties": {
+    "ticket_id": {
+      "type": "string",
+      "description": "Ticket identifier (e.g., T-4471). Normalizes: ticketId, ticket.id, ticketRef, id fields from legacy outputs.",
+      "pattern": "^T-[0-9]+$"
+    },
+    "action": {
+      "type": "string",
+      "enum": ["freeze", "partial_freeze", "deny"],
+      "description": "Freeze decision. Normalizes legacy: 'FREEZE'/'freeze_all'/'frozen'->'freeze'; scope variants->'partial_freeze'; rejections->'deny'."
+    },
+    "affected_accounts": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^AC-[0-9]+$"
+      },
+      "minItems": 1,
+      "description": "Account IDs impacted by decision. Normalizes: comma-separated strings, array of objects with 'number' field, and raw arrays into flat string array."
+    },
+    "reason_code": {
+      "type": "string",
+      "enum": ["fraud_suspected", "customer_request", "court_order", "insufficient_evidence"],
+      "description": "Structured reason for action. Normalizes legacy freetext ('fraud', 'unauthorised transactions') and numeric codes (e.g., dev_c's code 3) to canonical enum."
+    },
+    "evidence_summary": {
+      "type": "string",
+      "maxLength": 300,
+      "description": "Concise evidence backing the decision (max 300 chars). Normalizes legacy notes, arrays of evidence, and summary fields into single text field."
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "ticket_id": "T-4471",
+      "action": "freeze",
+      "affected_accounts": ["AC-5510029", "AC-5510030"],
+      "reason_code": "fraud_suspected",
+      "evidence_summary": "3 disputed transactions totalling 121700 INR. Beneficiary not recognised. Card still in possession. Fraud desk review pending."
+    },
+    {
+      "ticket_id": "T-4471",
+      "action": "partial_freeze",
+      "affected_accounts": ["AC-5510029"],
+      "reason_code": "court_order",
+      "evidence_summary": "Court order received 2026-09-28 restricting only primary account pending litigation."
+    }
+  ]
+}
